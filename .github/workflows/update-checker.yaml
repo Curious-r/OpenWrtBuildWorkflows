@@ -55,7 +55,7 @@ jobs:
       uses: GitRML/delete-workflow-runs@main
       with:
 #        token: ${{ secrets.TOKEN_REPO }}
-        token: ${{ github.repository }}
+        token: ${{ github.token }}
         repository: ${{ github.repository }}
         retain_days: 1
         keep_minimum_runs: 1
