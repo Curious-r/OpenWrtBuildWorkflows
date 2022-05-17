@@ -23,6 +23,8 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    outputs: 
+      cache-hit: ${{ steps.cacheHash.outputs.cache-hit }}
 
     steps:
 
@@ -52,7 +54,7 @@ jobs:
      
     steps:
     - name: Build trigger
-      if: needs.check.steps.cacheHash.outputs.cache-hit != 'true'
+      if: needs.check.outputs.cache-hit != 'true'
       uses: peter-evans/repository-dispatch@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
