@@ -12,6 +12,7 @@
 name: Update check for OpenWrt
 
 env:
+  REPO_NAME: openwrt
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: master
 
@@ -38,13 +39,13 @@ jobs:
       id: cacheHash
       uses: actions/cache@v3
       with:
-        path: .commitHash
+        path: ${{ env.REPO_NAME }}.commitHash
         key: HEAD-${{ steps.getHash.outputs.commitHash }}
 
     - name: Save New Commit Hash
       if: steps.cacheHash.outputs.cache-hit != 'true'
       run: |
-        echo ${{ steps.getHash.outputs.commitHash }} | tee .commitHash
+        echo ${{ steps.getHash.outputs.commitHash }} | tee ${{ env.REPO_NAME }}.commitHash
         
   trigger:
     runs-on: ubuntu-latest
