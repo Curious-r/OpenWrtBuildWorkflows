@@ -24,8 +24,7 @@ jobs:
   trigger:
     name: Set trigger to compile new firmware
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    permissions: write-all
     steps:
       - name: Build trigger
         uses: peter-evans/repository-dispatch@v1
