@@ -9,7 +9,7 @@
 # Description: Source code update checker
 #
 
-name: Update check for Lean LEDE
+name: Update check for OpenWrt
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
