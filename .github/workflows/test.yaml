@@ -1,1 +1,17 @@
 
+name: test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-workflow:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write 
+    steps:
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 1
