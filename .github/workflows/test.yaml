@@ -1,17 +1,231 @@
-
-name: test
+name: Test Workflow
 
 on:
+  workflow_call:
+    inputs:
+      repoURL:
+        required: true
+        type: string
+        default: https://github.com/openwrt/openwrt
+      repoBranch:
+        required: true
+        type: string
+        default: master
+      feedsConf:
+        required: true
+        type: string
+        default: feeds.conf.default
+      config:
+        required: true
+        type: string
+        default: .config
+      userScriptBeforeFeeds:
+        required: true
+        type: string
+        default: diy-part1.sh
+      userScriptAfterFeeds:
+        required: true
+        type: string
+        default: diy-part2.sh
+      uploadBinDirectory:
+        required: true
+        type: boolean
+        default: false
+      uploadFirmware:
+        required: true
+        type: boolean
+        default: true
+      cowtransfer:
+        required: true
+        type: boolean
+        default: false
+      wetransfer:
+        required: true
+        type: boolean
+        default: false
+      release:
+        required: true
+        type: boolean
+        default: false
+      timezone:
+        required: true
+        type: string
+        default: Asia/Shanghai
+
   workflow_dispatch:
+    inputs:
+      ssh:
+        description: "SSH connection to Actions"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  delete-workflow:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write 
+  build:
+    runs-on: ubuntu-20.04
+
     steps:
-    - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
-      with:
-        retain_days: 1
-        keep_minimum_runs: 1
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "${{ timezone}}"
+          sudo mkdir -p /workdir
+          sudo chown $USER:$GROUPS /workdir
+
+      - name: Clone source code
+        working-directory: /workdir
+        run: |
+          df -hT $PWD
+          git clone ${{ inputs.repoURL }} -b ${{ inputs.repoBranch }} openwrt
+          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+      - name: Load custom feeds
+        run: |
+          [ -e ${{ inputs.feedsConf }} ] && mv ${{ inputs.feedsConf }} openwrt/feeds.conf.default
+          chmod +x ${{ inputs.userScriptBeforeFeeds }}
+          cd openwrt
+          $GITHUB_WORKSPACE/${{ inputs.userScriptBeforeFeeds }}
+
+      - name: Update feeds
+        run: cd openwrt && ./scripts/feeds update -a
+
+      - name: Install feeds
+        run: cd openwrt && ./scripts/feeds install -a
+
+      - name: Load custom configuration
+        run: |
+          [ -e files ] && mv files openwrt/files
+          [ -e ${{ inputs.config }} ] && mv ${{ inputs.config }} openwrt/.config
+          chmod +x ${{ inputs.userScriptAfterFeeds }}
+          cd openwrt
+          $GITHUB_WORKSPACE/${{ inputs.userScriptAfterFeeds }}
+
+      - name: SSH connection to Actions
+        uses: P3TERX/ssh2actions@v1.0.0
+        if: (github.event.inputs.ssh == true && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+        env:
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+      - name: Download package
+        id: package
+        run: |
+          cd openwrt
+          make defconfig
+          make download -j8
+          find dl -size -1024c -exec ls -l {} \;
+          find dl -size -1024c -exec rm -f {} \;
+
+      - name: Compile the firmware
+        id: compile
+        run: |
+          cd openwrt
+          echo -e "$(nproc) thread compile"
+          make -j$(nproc) || make -j1 || make -j1 V=s
+          echo "::set-output name=status::success"
+          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+          [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+      - name: Check space usage
+        if: (!cancelled())
+        run: df -hT
+
+  upload:
+    runs-on: ubuntu-20.04
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Upload bin directory
+        uses: actions/upload-artifact@main
+        if: needs.build.steps.compile.outputs.status == 'success' && inputs.uploadBinDirectory == true
+        with:
+          name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: openwrt/bin
+
+      - name: Organize files
+        id: organize
+        if: inputs.uploadFirmware == true && !cancelled()
+        run: |
+          cd openwrt/bin/targets/*/*
+          rm -rf packages
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+          echo "::set-output name=status::success"
+
+      - name: Upload firmware directory
+        uses: actions/upload-artifact@main
+        if: steps.organize.outputs.status == 'success' && !cancelled()
+        with:
+          name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: ${{ env.FIRMWARE }}
+
+      - name: Upload firmware to cowtransfer
+        id: cowtransfer
+        if: steps.organize.outputs.status == 'success' && inputs.cowtransfer == true && !cancelled()
+        run: |
+          curl -fsSL git.io/file-transfer | sh
+          ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+          echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+          echo "::set-output name=url::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
+
+      - name: Upload firmware to WeTransfer
+        id: wetransfer
+        if: steps.organize.outputs.status == 'success' && inputs.wetransfer == true && !cancelled()
+        run: |
+          curl -fsSL git.io/file-transfer | sh
+          ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+          echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
+          echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
+
+      - name: Generate release tag
+        id: tag
+        if: inputs.release == true && !cancelled()
+        run: |
+          echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+          touch release.txt
+          [ ${{ inputs.cowtransfer }} = true ] && echo -e "Build from ${{ inputs.repoURL }}\nProducts transfer:\n🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
+          [ ${{ inputs.wetransfer }} = true ] && echo -e "Build from ${{ inputs.repoURL }}\nProducts transfer:\n🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
+          echo "::set-output name=status::success"
+
+      - name: Upload firmware to release
+        uses: softprops/action-gh-release@v1
+        if: steps.tag.outputs.status == 'success' && !cancelled()
+        with:
+          token: ${{ secrets.TOKEN_REPO }}
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
+          files: ${{ env.FIRMWARE }}/*
+
+  clean:
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: write
+      contents: write
+
+    steps:
+      - name: Delete workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          retain_days: 1
+          keep_minimum_runs: 3
+
+      - name: Remove old Releases
+        uses: dev-drprasad/delete-older-releases@v0.1.0
+        if: inputs.release == true && !cancelled()
+        with:
+          keep_latest: 3
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
