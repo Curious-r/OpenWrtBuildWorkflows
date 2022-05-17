@@ -59,7 +59,7 @@ jobs:
       uses: peter-evans/repository-dispatch@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        event-type: Source Code Update
+        event-type: Lean LEDE source code update
         
   clean:
     runs-on: ubuntu-latest
