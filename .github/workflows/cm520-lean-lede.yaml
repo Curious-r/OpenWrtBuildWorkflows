@@ -12,7 +12,7 @@ name: Build Lean LEDE for CM520
 
 on:
   repository_dispatch:
-    type: Lean LEDE source code update
+    type: [lean-lede-update]
   workflow_dispatch:
     inputs:
       ssh:
