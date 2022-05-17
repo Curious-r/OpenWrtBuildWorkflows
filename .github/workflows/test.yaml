@@ -1,9 +1,5 @@
 name: test
 https://github.com/Curious-r/Actions-OpenWrt
-env:
-  REPO_NAME: openwrt
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: master
 
 on:
   workflow_dispatch:
