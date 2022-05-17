@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2019-2021 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# File: .github/workflows/update-checker.yml
+# Description: Source code update checker
+#
+
+name: test
+
+env:
+  REPO_NAME: openwrt
+  REPO_URL: https://github.com/openwrt/openwrt
+  REPO_BRANCH: master
+  EVENT_TYPE: Openwrt source code update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    name: Set trigger to compile new firmware
+    runs-on: ubuntu-latest
+    needs: check
+    permissions:
+      metadata: read
+      contents: write
+    steps:
+      - name: Build trigger
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: $EVEVT_TYPE
