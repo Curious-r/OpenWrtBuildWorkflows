@@ -28,46 +28,45 @@ jobs:
       cache-hit: ${{ steps.cacheHash.outputs.cache-hit }}
 
     steps:
+      - name: Get Commit Hash
+        id: getHash
+        run: |
+          git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
+          echo "::set-output name=commitHash::$(git rev-parse HEAD)"
 
-    - name: Get Commit Hash
-      id: getHash
-      run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
-        echo "::set-output name=commitHash::$(git rev-parse HEAD)"
+      - name: Compare Commit Hash
+        id: cacheHash
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.REPO_NAME }}.commitHash
+          key: HEAD-${{ steps.getHash.outputs.commitHash }}
 
-    - name: Compare Commit Hash
-      id: cacheHash
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.REPO_NAME }}.commitHash
-        key: HEAD-${{ steps.getHash.outputs.commitHash }}
+      - name: Save New Commit Hash
+        if: steps.cacheHash.outputs.cache-hit != 'true'
+        run: |
+          echo ${{ steps.getHash.outputs.commitHash }} | tee ${{ env.REPO_NAME }}.commitHash
 
-    - name: Save New Commit Hash
-      if: steps.cacheHash.outputs.cache-hit != 'true'
-      run: |
-        echo ${{ steps.getHash.outputs.commitHash }} | tee ${{ env.REPO_NAME }}.commitHash
-        
   trigger:
     runs-on: ubuntu-latest
     needs: check
     permissions:
-     contents: write 
+      contents: write
     steps:
-    - name: Build trigger
-      if: needs.check.outputs.cache-hit != 'true'
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        event-type: OpenWrt source code update
-        
+      - name: Build trigger
+        if: needs.check.outputs.cache-hit != 'true'
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: OpenWrt source code update
+
   clean:
     runs-on: ubuntu-latest
     permissions:
-     actions: write 
+      actions: write
     steps:
-    - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        retain_days: 1
-        keep_minimum_runs: 1
+      - name: Delete workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          retain_days: 1
+          keep_minimum_runs: 1
