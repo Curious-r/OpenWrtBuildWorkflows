@@ -15,7 +15,7 @@ env:
   REPO_NAME: openwrt
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: master
-  EVENT_TYPE: Openwrt source code update
+  EVENT_TYPE: openwrt-update
 
 on:
   workflow_dispatch:
