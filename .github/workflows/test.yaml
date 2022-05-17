@@ -30,4 +30,4 @@ jobs:
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.TEST_TOKEN }}
-          event-type: $EVENT_TYPE
+          event-type: "$EVENT_TYPE"
