@@ -17,6 +17,7 @@ on:
       ssh:
         description: 'SSH connection to Actions'
         required: false
+        type: boolean
         default: false
 
 env:
