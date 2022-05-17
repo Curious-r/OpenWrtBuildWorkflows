@@ -12,7 +12,7 @@ name: Build OpenWrt for CM520
 
 on:
   repository_dispatch:
-    types: [OpenWrt source code update]
+    types: OpenWrt source code update
   workflow_dispatch:
     inputs:
       ssh:
