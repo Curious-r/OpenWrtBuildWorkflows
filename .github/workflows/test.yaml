@@ -1,6 +1,4 @@
 name: test
-https://github.com/Curious-r/Actions-OpenWrt
-
 on:
   workflow_dispatch:
 
