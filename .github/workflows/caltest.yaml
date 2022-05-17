@@ -1,0 +1,15 @@
+name: calltest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 */18 * * *
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call test
+        id: call
+        uses: ./.github/workflows/workflow-2.yml
