@@ -112,10 +112,17 @@ jobs:
     - name: Check space usage
       if: (!cancelled())
       run: df -hT
-
+      
+  upload:
+    runs-on: ubuntu-20.04
+    needs: build
+    permissions:
+      contents: write
+    
+    steps:
     - name: Upload bin directory
       uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      if: needs.build.steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
@@ -173,10 +180,17 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
 
+  clean:
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: write
+      contents: write
+      
+    steps:
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
-        token: ${{ secrets.TOKEN_REPO }}      
+        token: ${{ secrets.GITHUB_TOKEN }}      
         retain_days: 1
         keep_minimum_runs: 3
 
