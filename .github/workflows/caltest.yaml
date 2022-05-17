@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Call test
         id: call
-        uses: ./.github/workflows/workflow-2.yml
+        uses: ./.github/workflows/test.yaml
