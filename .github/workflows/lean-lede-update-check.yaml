@@ -44,16 +44,29 @@ jobs:
       run: |
         echo ${{ steps.getHash.outputs.commitHash }} | tee .commitHash
 
-    - name: Trigger build
-      if: steps.cacheHash.outputs.cache-hit != 'true'
+  trigger:
+    runs-on: ubuntu-latest
+    needs: check
+    permissions:
+     contents: write 
+     
+    steps:
+    - name: Build trigger
+      if: needs.check.steps.cacheHash.outputs.cache-hit != 'true'
       uses: peter-evans/repository-dispatch@v1
       with:
-        token: ${{ secrets.TOKEN_REPO }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         event-type: Source Code Update
-
+        
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+     actions: write 
+     
+    steps:
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
-        token: ${{ secrets.TOKEN_REPO }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         retain_days: 1
         keep_minimum_runs: 1
