@@ -29,5 +29,5 @@ jobs:
       - name: Build trigger
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TEST_TOKEN }}
           event-type: $EVEVT_TYPE
