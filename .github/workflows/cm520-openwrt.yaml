@@ -18,7 +18,8 @@ on:
       force-build:
         description: "Build new firmware whether the source code is updated or not"
         required: false
-        default: "false"
+        type: boolean
+        default: false
       ssh:
         description: "SSH connection to Actions"
         required: false
@@ -71,7 +72,7 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-20.04
     needs: check
-    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == 'true'
+    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build
 
     steps:
       - name: Checkout
