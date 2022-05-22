@@ -72,7 +72,7 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-20.04
     needs: check
-    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build
+    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == true
 
     steps:
       - name: Checkout
