@@ -18,13 +18,16 @@ on:
       force-build:
         description: "Build new firmware whether the source code is updated or not"
         required: false
-        type: boolean
-        default: false
+        default: "false"
       ssh:
         description: "SSH connection to Actions"
         required: false
+        default: "false"
+      test:
+        description: "test"
+        required: false
         type: boolean
-        default: false
+        default: true
   schedule:
     - cron: 0 */18 * * *
 
@@ -73,7 +76,7 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-20.04
     needs: check
-    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == true
+    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == "true"
 
     steps:
       - name: Checkout
@@ -122,7 +125,7 @@ jobs:
 
       - name: SSH connection to Actions
         uses: P3TERX/ssh2actions@v1.0.0
-        if: github.event.inputs.ssh == true || contains(github.event.action, 'ssh')
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
         env:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
