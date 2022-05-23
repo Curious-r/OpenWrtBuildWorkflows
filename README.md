@@ -10,11 +10,11 @@ This project fixes some functional failures caused by the upgrade of GitHub perm
 
 ### Usage:
 
-Fork this repository, generate your workflow file from `template.yaml`. You can rename the copy of `template.yaml` to any name you want, but remember that the file extension must be `.yaml` or `.yml`.
+ Generate your workflow repo from this repository, generate your workflow file from `template.yaml`. You can rename the copy of `template.yaml` to any name you want, but remember that the file extension must be `.yaml` or `.yml`. 
 
 In your workflow file, modify the content according to the annotations. 
 Then you can startup the workflow manually or regularly. 
-+ Select `Build OpenWrt` on the Actions page to run it manually.
++ Select the workflow name on the Actions page to run it manually.
 + For run regularly, you need to uncomment:
 ```
   schedule:
