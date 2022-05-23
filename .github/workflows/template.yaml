@@ -53,8 +53,8 @@ env:
   # and DIY_P2_SH is the after compiling one. You can modify the initial settings of
   # your firmware through these two scripts. If this is what you need, please upload
   # your scripts to the root directory of your workflow repo.
-  DIY_P1_SH: example1.sh
-  DIY_P2_SH: example2.sh
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
   # The following determines whether to upload the compiled products.
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
