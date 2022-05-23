@@ -24,5 +24,5 @@ Whether the workflow is started manually or regularly, the compilation will only
 - - -
 
 ### Copyright:
-MIT © 2022 Curious <https://www.curious.host>
-Upstream: © 2019-2020 P3TERX <https://p3terx.com>
+MIT Licence © 2022 Curious <https://www.curious.host> 
+Upstream: MIT License © 2019-2020 P3TERX <https://p3terx.com>
