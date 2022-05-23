@@ -39,7 +39,7 @@ on:
 
 env:
   REPO_NAME: openwrt
-  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: master
   FEEDS_CONF: cm520-openwrt-feeds.conf.default
   CONFIG_FILE: cm520-openwrt.config

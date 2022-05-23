@@ -21,6 +21,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
+# Workflow name which is showed in GitHub Actions.
 name: Build Example-Firmware for Example-Device
 
 on:
@@ -38,18 +39,31 @@ on:
 #    - cron: 0 */18 * * *
 
 env:
+  # REPO means the OpenWrt repo you want to build from in this workflow. 
+  # You can modify the REPO_NAME to any name you want, but remember not to let it 
+  # have the same name in other workflows.
   REPO_NAME: example-name
   REPO_URL: https://github.com/example/example
   REPO_BRANCH: master
+  # FEEDS_CONF and CONFIG_FILE is the name of your own config files for compiling,
+  # you should upload these files into the root directory of your workflow repo.
   FEEDS_CONF: example-feeds.conf.default
   CONFIG_FILE: example.config
+  # DIY_P1_SH is the name of extra bash script you want to execute before compiling, 
+  # and DIY_P2_SH is the after compiling one. You can modify the initial settings of
+  # your firmware through these two scripts. If this is what you need, please upload
+  # your scripts to the root directory of your workflow repo.
   DIY_P1_SH: example1.sh
   DIY_P2_SH: example2.sh
+  # The following determines whether to upload the compiled products.
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
+  # The following is the option of where the firmware needs to be transfered. 
+  # To enable the corresponding target, you need to change false to true.
   UPLOAD_COWTRANSFER: false
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: false
+  # Please change the following to your time zone.
   TZ: Asia/Shanghai
 
 jobs:
