@@ -27,7 +27,7 @@ on:
   workflow_dispatch:
     inputs:
       force-build:
-        description: "Build new firmware whether the source code is updated or not"
+        description: "Build new firmware anyway"
         required: false
         default: "false"
       ssh:
@@ -82,6 +82,8 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-20.04
     needs: check
+    permissions:
+      contents: write
     if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == 'true'
 
     steps:
