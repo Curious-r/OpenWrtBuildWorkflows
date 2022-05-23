@@ -10,7 +10,7 @@ This project fixes some functional failures caused by the upgrade of GitHub perm
 
 ### Usage:
 
-Fork this repository, generate your workflow file from *template.yaml*. You can rename the copy of *template.yaml* to any name you want, but remember that the file extension must be *.yaml* or *.yml*.
+Fork this repository, generate your workflow file from `template.yaml`. You can rename the copy of `template.yaml` to any name you want, but remember that the file extension must be `.yaml` or `.yml`.
 
 In your workflow file, modify the content according to the annotations. 
 Then you can startup the workflow manually or regularly. 
