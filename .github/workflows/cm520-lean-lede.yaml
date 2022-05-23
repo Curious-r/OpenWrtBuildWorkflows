@@ -29,7 +29,7 @@ on:
     - cron: 0 */18 * * *
 
 env:
-  REPO_NAME: openwrt
+  REPO_NAME: lean-lede
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: cm520-lean-lede-feeds.conf.default
