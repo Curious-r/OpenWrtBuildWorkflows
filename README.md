@@ -23,7 +23,7 @@ Then you can startup the workflow manually or regularly.
 
 Each time this workflow runs, it will check whether the specified repository is updated. If the source code is updated, it will start compiling the new firmware.
 
-Whether the workflow is started manually or regularly, the compilation will only be triggered when the source code is updated. However, during manual startup, you can force firmware compilation by entering true in `Build new firmware anyway`.
+Whether the workflow is started manually or regularly, the compilation will only be triggered when the source code is updated. However, during manual startup, you can force firmware compilation by entering `true` in `Build new firmware anyway`.
 
 - - -
 
