@@ -1,6 +1,6 @@
 #
 # Modification in Curious-r/OpenWrtBuildWorkflows: 
-# Copyright (c) 2022 Curious <https://curious.host>
+# Copyright (c) 2022 Curious <https://www.curious.host>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -49,10 +49,11 @@ env:
   # you should upload these files into the root directory of your workflow repo.
   FEEDS_CONF: example-feeds.conf.default
   CONFIG_FILE: example.config
-  # DIY_P1_SH is the name of extra bash script you want to execute before compiling, 
-  # and DIY_P2_SH is the after compiling one. You can modify the initial settings
-  # of your firmware through these two scripts. If this is what you need, please 
-  # upload your scripts to the root directory of your workflow repo.
+  # DIY_P1_SH is the name of extra bash script you want to execute before feeds 
+  # update&install and DIY_P2_SH is the one after feeds update&install. You can 
+  # modify the initial settings of your firmware through these two scripts. If 
+  # this is what you need, please upload your scripts to the root directory of 
+  # your workflow repo.
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   # The following determines whether to upload the compiled products.
