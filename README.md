@@ -5,7 +5,6 @@ This repository is improved based on **[P3TERX/Actions-OpenWrt](https://github.c
 - - -
 
 This project fixes some functional failures caused by the upgrade of GitHub permission system in the original project, and improves the function of automatic compilation of source code update. Workflows in this repository does not need additional tokens.
-
 **2023/2/16:** Fully refactored, solve a lot of old problems, improve safety and reliability.
 
 - - -
