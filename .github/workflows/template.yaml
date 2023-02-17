@@ -1,0 +1,262 @@
+#
+# Copyright (c) 2022 Curious <https://www.curious.host>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+# 
+# https://github.com/Curious-r/OpenWrtBuildWorkflows
+# Description: Automatically check OpenWrt source code update and build it. No additional keys are 
+# required.
+#
+# Some features come from https://github.com/P3TERX/Actions-OpenWrt, visit the repository to get its 
+# copyright information.
+#-------------------------------------------------------------------------------------------------------
+
+# Workflow name which is showed in GitHub Actions.
+name: Build Example-Firmware for Example-Device
+
+on:
+  workflow_dispatch:
+    inputs:
+      force-build:
+        description: "Build new firmware anyway"
+        required: false
+        default: "false"
+      ssh:
+        description: "SSH connection to Actions"
+        required: false
+        default: "false"
+#  schedule:
+#    - cron: 0 */18 * * *
+
+env:
+  # REPO means the OpenWrt repo you want to build from in this workflow. 
+  # You can modify the REPO_NAME to any name you want, but remember not to let it have the same name in 
+  # other workflows.
+  REPO_NAME: example-name
+  REPO_URL: https://github.com/example/example.git
+  REPO_BRANCH: master
+  BUILD_DEPENDS:  "ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential \
+                  bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext \
+                  gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 \
+                  libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev \
+                  libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs \
+                  msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip \
+                  libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+                  upx-ucl unzip vim wget xmlto xxd zlib1g-dev"
+  # FEEDS_CONF and CONFIG_FILE is the name of your own config files for compiling, you should upload 
+  # these files into the root directory of your workflow repo.
+  FEEDS_CONF: example-feeds.conf.default
+  CONFIG_FILE: example.config
+  # DIY_P1_SH is the name of extra bash script you want to execute before feeds update&install.
+  # DIY_P1_SH is the name of extra bash script you want to execute after feeds update&install.
+  # You can modify the initial settings of your firmware through these two scripts. If this is what you 
+  # need, please upload your scripts to the root directory of your workflow repo.
+  DIY_P1_SH: example-diy-part1.sh
+  DIY_P2_SH: example-diy-part2.sh
+  # The following determines whether to upload the compiled products.
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  # The following is the option of where the firmware needs to be transfered. 
+  # To enable the corresponding target, you need to change false to true.
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
+  UPLOAD_RELEASE: false
+  # Change the following to your time zone.
+  TIME_ZONE: Asia/Shanghai
+
+jobs:
+  check:
+    name: Check for source code updates
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cacheHash.outputs.cache-hit }}
+
+    steps:
+      - name: Get Commit Hash
+        id: getHash
+        run: |
+          git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
+          echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Compare Commit Hash
+        id: cacheHash
+        uses: actions/cache@main
+        with:
+          path: $REPO_NAME.commitHash
+          key: HEAD-${{ steps.getHash.outputs.commitHash }}
+
+      - name: Save New Commit Hash
+        if: steps.cacheHash.outputs.cache-hit != 'true'
+        run: |
+          echo ${{ steps.getHash.outputs.commitHash }} | tee $REPO_NAME.commitHash
+
+  build:
+    name: Build firmware
+    runs-on: ubuntu-latest
+    needs: check
+    permissions:
+      contents: write
+    if: needs.check.outputs.cache-hit != 'true' || github.event.inputs.force-build == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet/ /usr/local/lib/android/ /opt/ghc/
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install $BUILD_DEPENDS
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "$TIME_ZONE"
+          sudo mkdir -p /workdir/
+          sudo chown $USER:$GROUPS /workdir/
+
+      - name: Clone source code
+        working-directory: /workdir
+        run: |
+          df -hT $PWD
+          git clone $REPO_URL -b $REPO_BRANCH openwrt
+          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+      - name: Load custom feeds
+        run: |
+          [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+          chmod +x $DIY_P1_SH
+          cd openwrt/
+          $GITHUB_WORKSPACE/$DIY_P1_SH
+
+      - name: Update feeds
+        run: cd openwrt/ && ./scripts/feeds update -a
+
+      - name: Install feeds
+        run: cd openwrt/ && ./scripts/feeds install -a
+
+      - name: Load custom configuration
+        run: |
+          [ -e files ] && mv files openwrt/files
+          [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+          chmod +x $DIY_P2_SH
+          cd openwrt/
+          $GITHUB_WORKSPACE/$DIY_P2_SH
+
+      - name: SSH connection to Actions
+        uses: P3TERX/ssh2actions@main
+        if: github.event.inputs.ssh == 'true' || contains(github.event.action, 'ssh')
+        env:
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+      - name: Download package
+        id: package
+        run: |
+          cd openwrt/
+          make defconfig
+          make download -j8
+          find dl -size -1024c -exec ls -l {} \;
+          find dl -size -1024c -exec rm -f {} \;
+
+      - name: Compile the firmware
+        id: compile
+        run: |
+          cd openwrt/
+          echo -e "$(nproc) thread compile"
+          make -j$(nproc) || make -j1 || make -j1 V=s
+          echo "status=success" >> $GITHUB_OUTPUT
+          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+          [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+      - name: Check space usage
+        if: (!cancelled())
+        run: df -hT
+
+      - name: Upload bin directory
+        uses: actions/upload-artifact@main
+        if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+        with:
+          name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: openwrt/bin/
+
+      - name: Organize files
+        id: organize
+        if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+        run: |
+          cd openwrt/bin/targets/*/*
+          rm -rf packages/
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Upload firmware directory
+        uses: actions/upload-artifact@main
+        if: steps.organize.outputs.status == 'success' && !cancelled()
+        with:
+          name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: ${{ env.FIRMWARE }}
+
+      - name: Upload firmware to cowtransfer
+        id: cowtransfer
+        if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+        run: |
+          curl -fsSL git.io/file-transfer | sh
+          ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+          echo "::notice file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+          echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+
+      - name: Upload firmware to WeTransfer
+        id: wetransfer
+        if: steps.organize.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+        run: |
+          curl -fsSL git.io/file-transfer | sh
+          ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+          echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
+          echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+
+      - name: Generate release tag
+        id: tag
+        if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+        run: |
+          echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+          touch release.txt
+          [ $UPLOAD_COWTRANSFER = true ] && echo -e \
+            "Build from $REPO_URL\nProducts transfer:\n🔗 \
+            [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
+          [ $UPLOAD_WETRANSFER = true ] && echo -e \
+            "Build from $REPO_URL\nProducts transfer:\n🔗 \
+            [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Upload firmware to release
+        uses: softprops/action-gh-release@master
+        if: steps.tag.outputs.status == 'success' && !cancelled()
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
+          files: ${{ env.FIRMWARE }}/*
+
+  clean:
+    name: Clean up old assets
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 1
+
+      - name: Remove old Releases
+        uses: dev-drprasad/delete-older-releases@master
+        if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+        with:
+          keep_latest: 3
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
