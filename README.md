@@ -31,4 +31,3 @@ Whether the workflow is started manually or regularly, the compilation will only
 
 ### Copyright:
 MIT Licence © 2022~2023 Curious <https://curious.host>  
-Upstream: MIT License © 2019-2020 P3TERX <https://p3terx.com>
