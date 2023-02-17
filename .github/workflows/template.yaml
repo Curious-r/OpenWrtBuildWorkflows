@@ -83,7 +83,7 @@ jobs:
         id: cacheHash
         uses: actions/cache@main
         with:
-          path: $REPO_NAME.commitHash
+          path: $REPO_NAME-$REPO_BRANCH.commitHash
           key: HEAD-${{ steps.getHash.outputs.commitHash }}
 
       - name: Save New Commit Hash
