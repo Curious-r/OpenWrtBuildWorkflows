@@ -89,7 +89,7 @@ jobs:
       - name: Save New Commit Hash
         if: steps.cacheHash.outputs.cache-hit != 'true'
         run: |
-          echo ${{ steps.getHash.outputs.commitHash }} | tee $REPO_NAME.commitHash
+          echo ${{ steps.getHash.outputs.commitHash }} | tee $REPO_NAME-$REPO_BRANCH.commitHash
 
   build:
     name: Build firmware
@@ -138,7 +138,7 @@ jobs:
 
       - name: Load custom configuration
         run: |
-          [ -e files ] && mv files openwrt/files
+          [ -e files ] && mv files/ openwrt/files/
           [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
           chmod +x $DIY_P2_SH
           cd openwrt/
