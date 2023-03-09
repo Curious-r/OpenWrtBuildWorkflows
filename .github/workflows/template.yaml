@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2022 Curious <https://www.curious.host>
+# Copyright (c) 2022-2023 Curious <https://www.curious.host>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -44,16 +44,15 @@ env:
                    patch pkgconf python2.7 python3 python3-distutils python3-pip libpython3-dev qemu-utils rsync \
                    scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd \
                    zlib1g-dev"
-  # FEEDS_CONF and CONFIG_FILE is the name of your own config files for compiling, you should upload 
-  # these files into the root directory of your workflow repo.
-  FEEDS_CONF: example-feeds.conf.default
+  # CONFIG_FILE is the name of your own config files for compiling, you should upload these files into the root 
+  # directory of your workflow repo.
   CONFIG_FILE: example.config
-  # DIY_P1_SH is the name of extra bash script you want to execute before feeds update&install.
-  # DIY_P1_SH is the name of extra bash script you want to execute after feeds update&install.
+  # CUSTOM_SCRIPT_1 is the name of extra bash script you want to execute before feeds update&install.
+  # CUSTOM_SCRIPT_2 is the name of extra bash script you want to execute after feeds update&install.
   # You can modify the initial settings of your firmware through these two scripts. If this is what you 
   # need, please upload your scripts to the root directory of your workflow repo.
-  DIY_P1_SH: example-diy-part1.sh
-  DIY_P2_SH: example-diy-part2.sh
+  CUSTOM_SCRIPT_1: example-custom-script-1.sh
+  CUSTOM_SCRIPT_2: example-custom-script-2.sh
   # The following determines whether to upload the compiled products.
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -124,12 +123,11 @@ jobs:
           git clone $REPO_URL -b $REPO_BRANCH openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-      - name: Load custom feeds
+      - name: Run custom-script-1
         run: |
-          [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-          chmod +x $DIY_P1_SH
+          chmod +x $CUSTOM_SCRIPT_1
           cd openwrt/
-          $GITHUB_WORKSPACE/$DIY_P1_SH
+          $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_1
 
       - name: Update feeds
         run: cd openwrt/ && ./scripts/feeds update -a
@@ -141,9 +139,12 @@ jobs:
         run: |
           [ -e files ] && mv files/ openwrt/files/
           [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-          chmod +x $DIY_P2_SH
+ 
+      - name: Run custom-script-2
+        run: |
+          chmod +x $CUSTOM_SCRIPT_2
           cd openwrt/
-          $GITHUB_WORKSPACE/$DIY_P2_SH
+          $GITHUB_WORKSPACE/$CUSTOM_SCRIPT_2
 
       - name: SSH connection to Actions
         uses: P3TERX/ssh2actions@main
