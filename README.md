@@ -8,7 +8,7 @@ This project fixes some functional failures caused by the upgrade of GitHub perm
 
 **2023/2/16:** Fully refactored, solve a lot of old problems, improve safety and reliability.
 
-**2023/3/10:** Delete the feature to load `feeds.conf.default`, because it is easy to inadvertently cause problems when compiling source code of non-default branches or tags. 
+**2023/3/10:** Delete the feature of loading `feeds.conf.default`, because it is easy to inadvertently cause problems when compiling source code of non-default branches or tags. 
                Specifically, feeds that depend on the source code of a particular branch or tag also need to specify a branch or tag. At this point, if we still use file overwriting to introduce custom feeds, we must be careful that the branch or tag information of the original base feed is overwritten and lost. 
                Therefore, the alternative is to use `CUSTOM_SCRIPT_1` to modify the `feeds.conf.default`. Please check the comments in `example-custom-script-1.sh` for details.
 
