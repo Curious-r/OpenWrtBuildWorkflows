@@ -26,7 +26,7 @@ on:
         description: "SSH connection to Actions"
         required: false
         default: "false"
-# Uncomment the following to run regularly.
+# Uncomment the following to run regularly. Note that the cron expression here does not contain seconds.
 #  schedule:
 #    - cron: 0 */18 * * *
 
