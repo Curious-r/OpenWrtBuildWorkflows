@@ -54,6 +54,9 @@ env:
   # need, please upload your scripts to the root directory of your workflow repo.
   CUSTOM_SCRIPT_1: example-custom-script-1.sh
   CUSTOM_SCRIPT_2: example-custom-script-2.sh
+  # If you have packages in your configuration that are compiled but not solidified into firmware, set the 
+  # following variable to true.
+  RETAIN_COMPILED_PACKAGES: false
   # The following determines whether to upload the compiled products.
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -190,7 +193,7 @@ jobs:
         if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
         run: |
           cd openwrt/bin/targets/*/*
-          rm -rf packages/
+          [ $RETAIN_COMPILED_PACKAGES = true ] || rm -rf packages/
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -225,12 +228,12 @@ jobs:
         run: |
           echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
           touch release.txt
-          [ $UPLOAD_COWTRANSFER = true ] && echo -e \
-            "Build from $REPO_URL\nProducts transfer:\n🔗 \
-            [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
-          [ $UPLOAD_WETRANSFER = true ] && echo -e \
-            "Build from $REPO_URL\nProducts transfer:\n🔗 \
-            [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
+          echo "Build from $REPO_URL $REPO_BRANCH" >> release.txt
+          [ $UPLOAD_COWTRANSFER = true -o $UPLOAD_WETRANSFER = true ] && echo "Products transfer:" >> release.txt
+          [ $UPLOAD_COWTRANSFER = true ] && echo \
+            "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
+          [ $UPLOAD_WETRANSFER = true ] && echo \
+            "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: Upload firmware to release
