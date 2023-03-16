@@ -17,4 +17,3 @@
 #EOF
 #git apply example.patch
 
-
