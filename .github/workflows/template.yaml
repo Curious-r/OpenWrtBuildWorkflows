@@ -50,16 +50,16 @@ env:
   CONFIG_FILE: example.config
   # CUSTOM_SCRIPT_1 is the name of extra bash script you want to execute before feeds update&install.
   # CUSTOM_SCRIPT_2 is the name of extra bash script you want to execute after feeds update&install.
-  # You can modify the initial settings of your firmware through these two scripts. If this is what you 
-  # need, please upload your scripts to the root directory of your workflow repo.
+  # You can modify the initial settings of your firmware through these two scripts. If this is what you need,
+  # please upload your scripts to the root directory of your workflow repo.
   CUSTOM_SCRIPT_1: example-custom-script-1.sh
   CUSTOM_SCRIPT_2: example-custom-script-2.sh
-  # The following option determine whether to upload all compilation products to workflow artifacts.
+  # STORE_PRODUCTS determine whether to upload all compilation products to workflow artifacts.
+  # Not only firmwires, all compiled packages will be here, including compiled but not solidified into firmware.
   STORE_PRODUCTS: false
-  # The following option determine whether to upload firmwares to workflow artifacts.
+  # STORE_FIRMWARE determine whether to upload firmwares to workflow artifacts.
   STORE_FIRMWARE: true
-  # The following is the option of where the firmware needs to be transfered. 
-  # To enable the corresponding target, you need to change false to true.
+  # The following are options of where the firmware needs to be transfered. 
   COWTRANSFER_FIRMWARE: false
   WETRANSFER_FIRMWARE: false
   RELEASE_FIRMWARE: false
