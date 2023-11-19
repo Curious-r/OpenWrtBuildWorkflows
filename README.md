@@ -1,6 +1,6 @@
 ## Workflows for building OpenWrt firmware
 
-This repository is improved based on **[P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)**. Since the original repository has been archived and cannot submit PR, it is provided as a new repository.
+This repository is improved base on **[P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)**. Since the original repository has been archived and cannot submit PR, it is provided as a new repository.
 
 - - -
 
