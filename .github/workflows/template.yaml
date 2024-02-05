@@ -104,11 +104,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet/ /usr/local/lib/android/ /opt/ghc/
+          sudo rm -rf /etc/apt/sources.list.d/*
           sudo -E apt-get -qq update
           sudo -E apt-get -qq install $BUILD_DEPENDS
           sudo -E apt-get -qq autoremove --purge
